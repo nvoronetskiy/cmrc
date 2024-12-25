@@ -2,6 +2,15 @@
 # running in CMake configure mode
 if(_CMRC_GENERATE_MODE)
     # Read in the digits
+
+    get_filename_component(INPUT_FILE_EXT ${INPUT_FILE} LAST_EXT)
+    if( INPUT_FILE_EXT STREQUAL ".jpg")
+        include(${CMAKE_CURRENT_LIST_DIR}/ConvertToPng.cmake)
+        convert_to_webp(${INPUT_FILE} "${OUTPUT_FILE}.webp")
+
+        set(INPUT_FILE "${OUTPUT_FILE}.webp")
+    endif()
+
     file(READ "${INPUT_FILE}" bytes HEX)
     # Format each pair into a character literal. Heuristics seem to favor doing
     # the conversion in groups of five for fastest conversion
