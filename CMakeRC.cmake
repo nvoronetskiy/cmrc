@@ -36,7 +36,7 @@ if(_CMRC_GENERATE_MODE)
     # Конвертация списка файлов
     function(convert_pngs_to_webp images_list_in images_list_out)
         foreach(in_file ${${images_list_in}})
-            convert_png_to_webp(${in_file} out_file)
+            convert_to_webp(${in_file} out_file)
             list(APPEND processed_images_list "${CMAKE_CURRENT_BINARY_DIR}/${out_file}")
         endforeach()
         set(${images_list_out} ${processed_images_list} PARENT_SCOPE)
