@@ -4,10 +4,9 @@ if(_CMRC_GENERATE_MODE)
     # Read in the digits
 
     get_filename_component(INPUT_FILE_EXT ${INPUT_FILE} LAST_EXT)
-    if( INPUT_FILE_EXT STREQUAL ".jpg")
+    if( INPUT_FILE_EXT STREQUAL ".png")
         include(${CMAKE_CURRENT_LIST_DIR}/ConvertToPng.cmake)
         convert_to_webp(${INPUT_FILE} "${OUTPUT_FILE}.webp")
-
         set(INPUT_FILE "${OUTPUT_FILE}.webp")
     endif()
 
