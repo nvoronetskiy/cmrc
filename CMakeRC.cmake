@@ -14,9 +14,54 @@ if(_CMRC_GENERATE_MODE)
     endif()
 
     # TODO: любые типы изображений, а не только png
-    # Конвертация одного файла
+    # Конвертация одного файла.
+    # magick.exe на Windows не long-path-aware, поэтому копируем во временные
+    # файлы с коротким путём, конвертируем их, затем копируем результат назад.
     function(convert_to_webp in_file out_file)
-        execute_process(COMMAND magick ${in_file} -format webp -quality 80 -define webp:lossless=false -define webp:method=6 -define webp:auto-filter=true ${out_file} )
+        if(WIN32)
+            if(DEFINED ENV{TEMP} AND NOT "$ENV{TEMP}" STREQUAL "")
+                set(_tmp_root "$ENV{TEMP}")
+            elseif(DEFINED ENV{TMP} AND NOT "$ENV{TMP}" STREQUAL "")
+                set(_tmp_root "$ENV{TMP}")
+            else()
+                set(_tmp_root "$ENV{SystemRoot}/Temp")
+            endif()
+        else()
+            set(_tmp_root "/tmp")
+        endif()
+        file(TO_CMAKE_PATH "${_tmp_root}" _tmp_root)
+        string(MD5 _hash "${in_file}")
+        string(SUBSTRING "${_hash}" 0 8 _id)
+        string(RANDOM LENGTH 4 _rand)
+        set(_in_tmp "${_tmp_root}/c${_id}${_rand}.png")
+        set(_out_tmp "${_tmp_root}/c${_id}${_rand}.webp")
+
+        execute_process(
+            COMMAND "${CMAKE_COMMAND}" -E copy "${in_file}" "${_in_tmp}"
+            RESULT_VARIABLE _rv
+        )
+        if(NOT _rv EQUAL 0)
+            message(FATAL_ERROR "Failed to copy '${in_file}' to temporary file '${_in_tmp}'")
+        endif()
+
+        execute_process(
+            COMMAND magick "${_in_tmp}" -format webp -quality 80 -define webp:lossless=false -define webp:method=6 -define webp:auto-filter=true "${_out_tmp}"
+            RESULT_VARIABLE _rv
+        )
+        file(REMOVE "${_in_tmp}")
+        if(NOT _rv EQUAL 0)
+            file(REMOVE "${_out_tmp}")
+            message(FATAL_ERROR "ImageMagick failed to convert '${in_file}' to webp")
+        endif()
+
+        execute_process(
+            COMMAND "${CMAKE_COMMAND}" -E copy "${_out_tmp}" "${out_file}"
+            RESULT_VARIABLE _rv
+        )
+        file(REMOVE "${_out_tmp}")
+        if(NOT _rv EQUAL 0)
+            message(FATAL_ERROR "Failed to copy temporary webp to '${out_file}'")
+        endif()
     endfunction()
 
     get_filename_component(INPUT_FILE_EXT ${INPUT_FILE} LAST_EXT)
